@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIH26161 - Dam Break & Landslide-Lake Inundation Tactical Decision Support System</title>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  
+  <!-- Custom Cyber-Tactical Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Tactical Operations Command Bar -->
+  <header class="top-navbar">
+    <div class="brand-section">
+      <div class="brand-logo">
+        <i class="fa-solid fa-water"></i>
+      </div>
+      <div class="brand-title">
+        <h1>DAM BREAKER & INUNDATION DECISION SYSTEM</h1>
+        <div class="brand-subtitle">
+          <span class="badge-tag"><i class="fa-solid fa-shield-halved"></i> SIH26161</span>
+          <span>IIIT Kottayam · NTRO · National Disaster Management HADR</span>
+          <span class="badge-live"><span class="pulse-dot"></span> LIVE TACTICAL CELL</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Disaster Scenario Selector -->
+    <div class="scenario-selector-container">
+      <i class="fa-solid fa-satellite-dish" style="color: var(--accent-cyan); font-size: 0.85rem;"></i>
+      <select id="scenarioSelect" class="scenario-select" title="Switch Disaster Simulation Scenario">
+        <option value="chamoli_2021">Chamoli / Rishi Ganga (Feb 2021 Real Case)</option>
+        <option value="tehri_himalayan">Tehri Dam High-Head Overtopping Simulation</option>
+        <option value="phuktal_2015">Phuktal River Landslide Dam Lake (2015)</option>
+      </select>
+    </div>
+
+    <!-- Telemetry Status Bar -->
+    <div class="telemetry-bar">
+      <div class="telemetry-item">
+        <span class="telemetry-label">Simulation Time</span>
+        <span id="topSimTime" class="telemetry-value">T+00:00</span>
+      </div>
+      <div class="telemetry-item">
+        <span class="telemetry-label">Wave Front</span>
+        <span id="topWaveFront" class="telemetry-value">0.0 km</span>
+      </div>
+      <div class="telemetry-item">
+        <span class="telemetry-label">Exposed Pop</span>
+        <span id="topExposedPop" class="telemetry-value" style="color: var(--color-caution);">--</span>
+      </div>
+      <button id="btnOpenEAP" class="btn-action">
+        <i class="fa-solid fa-file-shield"></i> Generate EAP Action Plan
+      </button>
+    </div>
+  </header>
+
+  <!-- View Navigation Tabs -->
+  <nav class="view-navigation">
+    <button class="nav-tab-btn active" data-tab="tab-map">
+      <i class="fa-solid fa-map-location-dot"></i> Tactical Evacuation Map
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-sph3d">
+      <i class="fa-solid fa-cube"></i> 3D SPH Near-Field Physics
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-coupling">
+      <i class="fa-solid fa-arrows-split-up-and-left"></i> Momentum Coupling Inspector
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-uq">
+      <i class="fa-solid fa-chart-line"></i> Multi-Fidelity UQ
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-validation">
+      <i class="fa-solid fa-satellite"></i> Sentinel-1 SAR & Validation
+    </button>
+  </nav>
+
+  <!-- Main Grid Container -->
+  <main class="main-container">
+    
+    <!-- LEFT SIDEBAR: Physical Model & Terrain Intel -->
+    <aside class="side-panel">
+      
+      <!-- Event Overview Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-mountain-sun"></i> Reservoir & Breach Intel</span>
+          <span id="damTypeBadge" class="badge-tag">Rockslide Dam</span>
+        </div>
+        <div style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 14px;" id="scenarioDesc">
+          Loading scenario parameters...
+        </div>
+        <div class="metric-grid">
+          <div class="metric-box">
+            <span class="metric-label">Head / Crest</span>
+            <span id="metricHead" class="metric-value-lg">-- <span class="metric-unit">m</span></span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Volume Released</span>
+            <span id="metricVol" class="metric-value-lg">-- <span class="metric-unit">MCM</span></span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Peak Discharge Q</span>
+            <span id="metricPeakQ" class="metric-value-lg" style="color: var(--cyan-bright);">-- <span class="metric-unit">m³/s</span></span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Formation Time tf</span>
+            <span id="metricTf" class="metric-value-lg">-- <span class="metric-unit">hrs</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hydrograph Curve Box -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-chart-area"></i> Breach Discharge Q(t)</span>
+        </div>
+        <div style="height: 155px;">
+          <canvas id="miniHydrographChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Re-routing & Parametric Safety Tuning Controls -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-sliders"></i> Evacuation Parametrization</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.75rem;">
+          <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="color: var(--text-secondary); font-weight: 600;">Convoy Speed:</span>
+              <span id="speedVal" style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-cyan-light);">25 km/h</span>
+            </div>
+            <input type="range" id="speedSlider" min="10" max="50" value="25" class="time-slider">
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="color: var(--text-secondary); font-weight: 600;">Clearance Safety Buffer:</span>
+              <span id="bufferVal" style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-cyan-light);">15 min</span>
+            </div>
+            <input type="range" id="bufferSlider" min="5" max="45" value="15" class="time-slider">
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="color: var(--text-secondary); font-weight: 600;">Critical Inundation Limit:</span>
+              <span id="depthLimitVal" style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-cyan-light);">0.30 m</span>
+            </div>
+            <input type="range" id="depthLimitSlider" min="0.1" max="0.8" step="0.05" value="0.30" class="time-slider">
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- CENTER STAGE: Multi-View Simulation Viewport -->
+    <section class="center-stage">
+      
+      <div class="stage-viewport">
+        
+        <!-- View 1: 2D GIS Tactical Map with Hydrodynamic Particle Layer -->
+        <div id="tab-map" class="map-container" style="display: block;">
+          <div id="leafletMap" style="width: 100%; height: 100%;"></div>
+          <canvas id="hydroParticleCanvas"></canvas>
+          
+          <!-- Map HUD Overlay -->
+          <div class="map-hud-overlay">
+            <div style="font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">
+              Tactical Inundation Layers
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button id="btnToggleParticles" class="badge-tag" style="cursor: pointer;">
+                <i class="fa-solid fa-water"></i> Hydro Flow Particles: ON
+              </button>
+              <button id="btnToggleRoutes" class="badge-tag" style="cursor: pointer;">
+                <i class="fa-solid fa-route"></i> Escape Routes: ON
+              </button>
+            </div>
+          </div>
+
+          <!-- Legend Overlay -->
+          <div class="map-legend">
+            <div style="font-weight: 800; font-family: var(--font-system); margin-bottom: 6px; color: var(--text-primary); letter-spacing: 0.02em;">
+              OPERATIONAL STATUS
+            </div>
+            <div class="legend-item"><div class="legend-color" style="background: var(--color-safe);"></div> Road Open (h < 0.1m)</div>
+            <div class="legend-item"><div class="legend-color" style="background: var(--color-caution);"></div> Caution (0.1m - 0.3m)</div>
+            <div class="legend-item"><div class="legend-color" style="background: var(--color-critical);"></div> Impassable / Cut-Off (h ≥ 0.3m)</div>
+            <div class="legend-item"><div class="legend-color" style="background: var(--accent-cyan);"></div> Hydrodynamic Wave Front</div>
+            <div class="legend-item"><div class="legend-color" style="background: var(--color-purple);"></div> Designated Safe Shelter Hub</div>
+          </div>
+        </div>
+
+        <!-- View 2: 3D SPH Particle Visualizer -->
+        <div id="tab-sph3d" class="view-tab-content">
+          <div id="threeCanvasContainer"></div>
+          <div class="map-hud-overlay" style="top: 18px; left: 18px; width: 350px;">
+            <div style="font-weight: 800; font-family: var(--font-system); font-size: 0.88rem; color: #FFFFFF; margin-bottom: 6px;">
+              <i class="fa-solid fa-cube" style="color: #38BDF8;"></i> SPH Near-Field Fluid Mechanics
+            </div>
+            <p style="font-size: 0.74rem; color: #94A3B8; line-height: 1.4;">
+              DualSPHysics 3D particle Lagrangian solver capturing violent vertical plunging jets, air entrainment, and turbulent free-surface break.
+            </p>
+            <div style="margin-top: 8px; font-size: 0.7rem; font-family: var(--font-mono); color: #38BDF8; font-weight: 700;">
+              Particles: 16,000 | CFL Time Step: 1.2e-4 s
+            </div>
+          </div>
+        </div>
+
+        <!-- View 3: Momentum Coupling Inspector -->
+        <div id="tab-coupling" class="view-tab-content">
+          <div style="margin-bottom: 18px;">
+            <h3 style="font-size: 1.2rem; font-family: var(--font-system); font-weight: 800; color: var(--text-primary);">
+              Momentum-Aware SPH $\to$ Delft3D Coupling Interface
+            </h3>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
+              Transfers full momentum state: Discharge $Q(t)$, Velocity Magnitude $u_{\text{mag}}(t)$, and Flow Direction $u_{\text{dir}}(t)$ at the 0.85 km control plane.
+            </p>
+          </div>
+          <div class="metric-grid" style="margin-bottom: 18px;">
+            <div class="metric-box">
+              <span class="metric-label">Mass Balance Conservation</span>
+              <span id="massBalanceVal" class="metric-value-lg" style="color: var(--color-safe);">0.80% <span class="metric-unit">Error</span></span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Coupling Criterion</span>
+              <span class="metric-value-lg" style="color: var(--color-safe);">PASSED <span class="metric-unit">(< 1.5% target)</span></span>
+            </div>
+          </div>
+          <div class="chart-container-box">
+            <div class="chart-title">Control Plane Momentum Flux & Velocity Magnitude Profile</div>
+            <div style="height: 240px;">
+              <canvas id="couplingVelocityChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- View 4: Multi-Fidelity Uncertainty Quantification -->
+        <div id="tab-uq" class="view-tab-content">
+          <div style="margin-bottom: 18px;">
+            <h3 style="font-size: 1.2rem; font-family: var(--font-system); font-weight: 800; color: var(--text-primary);">
+              Multi-Fidelity Uncertainty Quantification (UQ)
+            </h3>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
+              350 cheap parametric physics runs + 10 coupled high-fidelity hydrodynamic simulations + Gaussian Process discrepancy correction.
+            </p>
+          </div>
+          <div class="alert-callout" style="background: rgba(124, 58, 237, 0.08); border-color: rgba(124, 58, 237, 0.3);">
+            <i class="fa-solid fa-circle-info" style="color: var(--color-purple);"></i>
+            <div>
+              <div class="alert-callout-title" style="color: var(--color-purple);">Scientific Integrity Notice</div>
+              <div class="alert-callout-body" style="color: var(--text-primary);">
+                "Inundation Probability" represents <strong>Scenario Frequency</strong> (% of plausible sampled breach runs inundating the zone), NOT structural dam failure probability.
+              </div>
+            </div>
+          </div>
+          <div class="chart-container-box">
+            <div class="chart-title">Arrival Time Confidence Envelopes (P10 - P50 - P90)</div>
+            <div style="height: 250px;">
+              <canvas id="uqDiscrepancyChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- View 5: Sentinel-1 SAR & Analytical Validation -->
+        <div id="tab-validation" class="view-tab-content">
+          <div style="margin-bottom: 18px;">
+            <h3 style="font-size: 1.2rem; font-family: var(--font-system); font-weight: 800; color: var(--text-primary);">
+              Three-Tier Validation Studio
+            </h3>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
+              Analytical Ritter Dam-Break solution, Flume benchmark, and Sentinel-1 SAR Satellite Earth Observation.
+            </p>
+          </div>
+          
+          <div class="metric-grid" style="margin-bottom: 18px;">
+            <div class="metric-box">
+              <span class="metric-label">Sentinel-1 CSI Metric</span>
+              <span id="valCsi" class="metric-value-lg" style="color: var(--accent-cyan-light);">0.833</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">F1 Score / IoU</span>
+              <span id="valF1" class="metric-value-lg" style="color: var(--color-safe);">0.909 / 0.833</span>
+            </div>
+          </div>
+
+          <div class="chart-container-box">
+            <div class="chart-title">Tier 1: Ritter Analytical 1D Solution vs Numerical SPH Solver (RMSE < 0.05m)</div>
+            <div style="height: 200px;">
+              <canvas id="ritterValidationChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-container-box">
+            <div class="chart-title">Tier 3: Sentinel-1 SAR Spatial Overpass Confusion Matrix (T+01:45)</div>
+            <div class="confusion-matrix-grid">
+              <div class="confusion-cell tp">
+                <div style="font-size: 0.68rem; color: var(--color-safe); font-weight: 800;">TRUE POSITIVE (OVERLAP)</div>
+                <div style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary); font-family: var(--font-mono); margin-top: 4px;">14.85 km²</div>
+              </div>
+              <div class="confusion-cell fp">
+                <div style="font-size: 0.68rem; color: var(--color-caution); font-weight: 800;">FALSE POSITIVE (MODEL ONLY)</div>
+                <div style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary); font-family: var(--font-mono); margin-top: 4px;">1.35 km²</div>
+              </div>
+              <div class="confusion-cell fn">
+                <div style="font-size: 0.68rem; color: var(--color-critical); font-weight: 800;">FALSE NEGATIVE (SAT ONLY)</div>
+                <div style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary); font-family: var(--font-mono); margin-top: 4px;">1.62 km²</div>
+              </div>
+              <div class="confusion-cell">
+                <div style="font-size: 0.68rem; color: var(--text-muted); font-weight: 800;">PRECISION / RECALL</div>
+                <div style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary); font-family: var(--font-mono); margin-top: 4px;">91.7% / 90.2%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Time Scrubber Playback Controller Bar -->
+      <div class="time-scrubber-bar">
+        <button id="btnPlayPause" class="playback-btn play-main-btn" title="Play/Pause">
+          <i class="fa-solid fa-play"></i>
+        </button>
+        <button id="btnStepBack" class="playback-btn" title="Step Back -5 min">
+          <i class="fa-solid fa-backward-step"></i>
+        </button>
+        <button id="btnStepForward" class="playback-btn" title="Step Forward +5 min">
+          <i class="fa-solid fa-forward-step"></i>
+        </button>
+
+        <!-- Playback Speed Switcher -->
+        <div style="display: flex; gap: 4px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 2px 4px; border-radius: 999px;">
+          <button class="filter-chip speed-btn" data-speed="1.0">1x</button>
+          <button class="filter-chip speed-btn" data-speed="2.0">2x</button>
+          <button class="filter-chip speed-btn" data-speed="5.0">5x</button>
+        </div>
+        
+        <div class="slider-container">
+          <div style="display: flex; justify-content: space-between; font-size: 0.72rem;">
+            <span style="color: var(--text-secondary); font-weight: 700; letter-spacing: 0.04em;">HYDRODYNAMIC WAVE EVOLUTION</span>
+            <span style="color: var(--accent-cyan-light); font-family: var(--font-mono); font-weight: 700;" id="sliderLabelTime">00:00 (0 min)</span>
+          </div>
+          <input type="range" id="simTimeSlider" min="0" max="360" value="0" step="2" class="time-slider">
+          <div class="time-markers">
+            <span>T+00:00 (Breach)</span>
+            <span>T+01:00</span>
+            <span>T+02:00</span>
+            <span>T+03:00</span>
+            <span>T+04:00</span>
+            <span>T+06:00 (End)</span>
+          </div>
+        </div>
+
+        <div class="sim-time-display" id="clockDisplay">
+          T+00:00
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT SIDEBAR: Settlement Evacuation Decision Matrix -->
+    <aside class="side-panel">
+      
+      <!-- Operational Alert Header -->
+      <div class="card" style="border-color: rgba(220, 38, 38, 0.25);">
+        <div class="card-header" style="border-bottom-color: rgba(220, 38, 38, 0.15);">
+          <span class="card-title" style="color: var(--color-critical);"><i class="fa-solid fa-triangle-exclamation" style="color: var(--color-critical);"></i> Evacuation Decision Board</span>
+        </div>
+        <div style="font-size: 0.74rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 12px;">
+          Time-dependent road routing calculating <strong>Latest Safe Departure Time (LSDT)</strong> & identifying isolated settlements.
+        </div>
+
+        <!-- Filter Chips -->
+        <div class="filter-chip-bar">
+          <button class="filter-chip active" data-filter="all">All</button>
+          <button class="filter-chip" data-filter="nvr" style="color: var(--color-critical);">No Route (NVR)</button>
+          <button class="filter-chip" data-filter="urgent" style="color: var(--color-caution);">Urgent</button>
+          <button class="filter-chip" data-filter="safe" style="color: var(--color-safe);">Safe</button>
+        </div>
+      </div>
+
+      <!-- Settlement Decision Cards Container -->
+      <div id="settlementsContainer">
+        <!-- Rendered by JS -->
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- Emergency Action Plan (EAP) Modal -->
+  <div id="eapModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span class="badge-tag"><i class="fa-solid fa-shield"></i> NDRF / NTRO HADR DIRECTIVE</span>
+            <span id="eapBulletinId" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-secondary);">EAP-001</span>
+          </div>
+          <h2 style="font-size: 1.35rem; font-weight: 800; font-family: var(--font-system); color: var(--text-primary); margin-top: 6px;" id="eapTitle">
+            Official Emergency Action Plan (EAP) Bulletin
+          </h2>
+        </div>
+        <button id="btnCloseEAP" class="playback-btn" style="border-radius: 50%;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div id="eapBody" style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.6;">
+        <!-- Generated Dynamically -->
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-subtle);">
+        <button class="btn-secondary" onclick="window.print()">
+          <i class="fa-solid fa-print"></i> Print Official Directive
+        </button>
+        <button id="btnDismissEAP" class="btn-action">
+          <i class="fa-solid fa-check"></i> Acknowledge & Dispatch to SDRF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Custom JS Modules -->
+  <script src="sph3d.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
