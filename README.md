@@ -11,6 +11,20 @@
 
 ---
 
+## 🖥️ User Interface & Visual Showcase
+
+### 1. 🗺️ Tactical Evacuation Map & Operations Dashboard
+![Tactical Inundation Dashboard](docs/screenshots/dashboard_tactical_map.jpg)
+*Real-time GIS flood corridor tracking, dynamic road network cut-off statuses ($h \ge 0.3\,\text{m}$), and settlement evacuation matrix with Latest Safe Departure Time (LSDT).*
+
+<br>
+
+### 2. 🧊 3D SPH Near-Field Fluid Mechanics Simulator
+![3D SPH Physics Simulation](docs/screenshots/sph_3d_physics.jpg)
+*Lagrangian particle fluid simulation capturing plunging vertical jets, turbulent free-surface break, and the momentum-aware control plane interface.*
+
+---
+
 ## 🎯 Operational Mission
 
 Traditional hydraulic inundation tools answer only *"Where does the flood water go?"*  
