@@ -18,8 +18,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   
+  <!-- KaTeX for High-Fidelity Scientific Mathematical Typography -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  
   <!-- Custom Cyber-Tactical Stylesheet -->
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=1.1">
 </head>
 <body>
 
@@ -195,9 +200,9 @@
             <div style="font-weight: 800; font-family: var(--font-system); margin-bottom: 6px; color: var(--text-primary); letter-spacing: 0.02em;">
               OPERATIONAL STATUS
             </div>
-            <div class="legend-item"><div class="legend-color" style="background: var(--color-safe);"></div> Road Open (h < 0.1m)</div>
+            <div class="legend-item"><div class="legend-color" style="background: var(--color-safe);"></div> Road Open (h &lt; 0.1m)</div>
             <div class="legend-item"><div class="legend-color" style="background: var(--color-caution);"></div> Caution (0.1m - 0.3m)</div>
-            <div class="legend-item"><div class="legend-color" style="background: var(--color-critical);"></div> Impassable / Cut-Off (h ≥ 0.3m)</div>
+            <div class="legend-item"><div class="legend-color" style="background: var(--color-critical);"></div> Impassable / Cut-Off (h &ge; 0.3m)</div>
             <div class="legend-item"><div class="legend-color" style="background: var(--accent-cyan);"></div> Hydrodynamic Wave Front</div>
             <div class="legend-item"><div class="legend-color" style="background: var(--color-purple);"></div> Designated Safe Shelter Hub</div>
           </div>
@@ -223,10 +228,10 @@
         <div id="tab-coupling" class="view-tab-content">
           <div style="margin-bottom: 18px;">
             <h3 style="font-size: 1.2rem; font-family: var(--font-system); font-weight: 800; color: var(--text-primary);">
-              Momentum-Aware SPH $\to$ Delft3D Coupling Interface
+              Momentum-Aware SPH → Delft3D Coupling Interface
             </h3>
             <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
-              Transfers full momentum state: Discharge $Q(t)$, Velocity Magnitude $u_{\text{mag}}(t)$, and Flow Direction $u_{\text{dir}}(t)$ at the 0.85 km control plane.
+              Transfers full momentum state: Discharge <em>Q(t)</em>, Velocity Magnitude <em>u</em><sub>mag</sub>(<em>t</em>), and Flow Direction <em>u</em><sub>dir</sub>(<em>t</em>) at the 0.85 km control plane.
             </p>
           </div>
           <div class="metric-grid" style="margin-bottom: 18px;">
@@ -236,7 +241,7 @@
             </div>
             <div class="metric-box">
               <span class="metric-label">Coupling Criterion</span>
-              <span class="metric-value-lg" style="color: var(--color-safe);">PASSED <span class="metric-unit">(< 1.5% target)</span></span>
+              <span class="metric-value-lg" style="color: var(--color-safe);">PASSED <span class="metric-unit">(&lt; 1.5% target)</span></span>
             </div>
           </div>
           <div class="chart-container-box">
@@ -297,7 +302,7 @@
           </div>
 
           <div class="chart-container-box">
-            <div class="chart-title">Tier 1: Ritter Analytical 1D Solution vs Numerical SPH Solver (RMSE < 0.05m)</div>
+            <div class="chart-title">Tier 1: Ritter Analytical 1D Solution vs Numerical SPH Solver (RMSE &lt; 0.05m)</div>
             <div style="height: 200px;">
               <canvas id="ritterValidationChart"></canvas>
             </div>
@@ -437,7 +442,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   
   <!-- Custom JS Modules -->
-  <script src="sph3d.js"></script>
-  <script src="app.js"></script>
+  <script src="sph3d.js?v=1.1"></script>
+  <script src="app.js?v=1.1"></script>
 </body>
 </html>

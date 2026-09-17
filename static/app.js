@@ -231,6 +231,7 @@ class DamBreakerApp {
       } else if (tabId === 'tab-validation') {
         this.loadValidationView();
       }
+      this.triggerMathRender();
     }
   }
 
@@ -890,6 +891,7 @@ class DamBreakerApp {
       `;
 
       document.getElementById('eapModal').classList.add('active');
+      this.triggerMathRender();
     } catch (err) {
       console.error("EAP generation error:", err);
     }
@@ -897,6 +899,22 @@ class DamBreakerApp {
 
   closeEAPModal() {
     document.getElementById('eapModal').classList.remove('active');
+  }
+
+  triggerMathRender() {
+    if (window.renderMathInElement) {
+      try {
+        window.renderMathInElement(document.body, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false }
+          ],
+          throwOnError: false
+        });
+      } catch (e) {
+        console.debug("KaTeX render notice:", e);
+      }
+    }
   }
 }
 
